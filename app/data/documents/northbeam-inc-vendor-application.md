@@ -10,9 +10,9 @@ Legal name: Northbeam Analytic Inc.
 Trading name: Northbeam
 Business address: 410 King Street West, Suite 810, Toronto, ON M5V 1K2
 Primary contact: Jordan Ellis, Accounts Receivable
-Contact email: ap@northbeam-analytics.com
+Contact email: ap@northbeam-analytics.example
 Phone: 416-555-0142
-Business number: 81234 5678 RT0001
+Business number: 00000 0000 RT0000 (fictional)
 
 ## About the Company
 
@@ -22,9 +22,9 @@ Northbeam Analytic Inc. is formerly operating as Northbeam Analytics and was reo
 
 Please set up payments to our new account below. All future invoices, including those for existing services, should be paid to this account.
 
-Bank: Pinecrest Savings
+Bank: Demo Bank C (fictional)
 Account ending: 2290
-Remittance email: ap@northbeam-analytics.com
+Remittance email: ap@northbeam-analytics.example
 
 ## Services Requested
 

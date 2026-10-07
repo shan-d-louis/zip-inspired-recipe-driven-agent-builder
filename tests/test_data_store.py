@@ -81,3 +81,91 @@ def test_key_quotes_each_inside_one_chunk(doc_name, quote):
     text = data_store._read_document(doc_name)
     chunks = data_store.chunk_document(doc_name, text)
     assert sum(quote in c.text for c in chunks) == 1
+
+
+# --- Retrieval: the live-demo scenario must be found by plain keyword search ---
+
+RESIDENCY_QUERIES = [
+    "data residency",
+    "where is data stored",
+    "Flag any conflict between this vendor's data terms and our data residency policy",
+    "Canadian and EU customer data location",
+]
+
+
+@pytest.mark.parametrize("query", RESIDENCY_QUERIES)
+def test_residency_queries_find_fjord_clause(query):
+    top = data_store.bm25_search(query, data_store.request_chunks("3"), k=3)
+    assert any(KEY_QUOTES["fjord-dpa"] in c.text for c in top), [c.chunk_id for c in top]
+
+
+@pytest.mark.parametrize("query", RESIDENCY_QUERIES)
+def test_residency_queries_find_residency_policy(query):
+    top = data_store.bm25_search(query, data_store.policy_chunks(), k=3)
+    assert "POL-03" in [c.chunk_id for c in top]
+
+
+def test_bm25_search_empty_corpus():
+    assert data_store.bm25_search("anything", []) == []
+
+
+# --- Cached data must not be shared between callers ---
+
+
+def test_mutating_returned_data_does_not_leak():
+    data_store.get_request("1")["amount"] = 0
+    data_store.list_requests()[0]["documents"].clear()
+    data_store.list_vendors()[0]["name"] = "Hacked"
+    data_store.get_vendor("V-1001")["status"] = "blocked"
+    data_store.get_contract("V-1001")["max_annual_increase_pct"] = 99
+    data_store.get_purchase_history("V-1001")[0]["amount"] = -1
+    data_store.get_policies()[0]["text"] = "changed"
+    data_store.get_documents("1")[0]["text"] = "changed"
+    data_store.load_presets()[0].tools.append("api_data")
+
+    assert data_store.get_request("1")["amount"] == 64900
+    assert data_store.list_requests()[0]["documents"] == ["northbeam-master-agreement", "northbeam-renewal-order-form"]
+    assert data_store.list_vendors()[0]["name"] == "Northbeam Analytics"
+    assert data_store.get_vendor("V-1001")["status"] == "active"
+    assert data_store.get_contract("V-1001")["max_annual_increase_pct"] == 7
+    assert data_store.get_purchase_history("V-1001")[0]["amount"] == 51500
+    assert data_store.get_policies()[0]["text"] != "changed"
+    assert data_store.get_documents("1")[0]["text"] != "changed"
+    assert data_store.load_presets()[0].tools == ["api_data", "document_retrieval", "company_context"]
+
+
+# --- Review follow-ups ---
+
+
+def test_list_vendors_has_name_domain_status():
+    for vendor in data_store.list_vendors():
+        assert vendor["name"]
+        assert vendor["email_domain"] == vendor["contact_email"].split("@")[1]
+        assert vendor["status"] in {"active", "onboarding"}
+
+
+def test_presets_are_exactly_the_two_and_never_use_fjord():
+    presets = data_store.load_presets()
+    assert sorted(p.name for p in presets) == ["Duplicate Vendor Check", "Renewal Check"]
+    assert "3" not in {p.default_request_id for p in presets}  # Fjord is built live on stage
+
+
+def test_vendor_data_is_obviously_fictional():
+    for vendor in data_store.list_vendors():
+        assert "(fictional)" in vendor["bank_account"]
+        assert vendor["email_domain"].endswith(".example")  # reserved domain, can't be real
+
+
+def test_bm25_returns_top_k_even_when_no_score_is_positive():
+    # Tiny corpus: the only query word appears in every chunk, so its IDF is
+    # negative, and an unknown word scores 0. Results must still come back.
+    chunks = [
+        data_store.Chunk(doc_name="d", chunk_id=f"d#{i}", text=text)
+        for i, text in enumerate(["vendor alpha", "vendor beta", "vendor gamma"], start=1)
+    ]
+    bm25 = data_store.BM25Okapi([data_store.tokenize(c.text) for c in chunks])
+    assert all(score <= 0 for score in bm25.get_scores(["vendor"]))
+
+    assert len(data_store.bm25_search("vendor", chunks, k=2)) == 2
+    # All scores equal (zero): ties keep the original order.
+    assert [c.chunk_id for c in data_store.bm25_search("unmatched", chunks, k=3)] == ["d#1", "d#2", "d#3"]

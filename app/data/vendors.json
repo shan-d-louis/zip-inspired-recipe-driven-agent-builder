@@ -4,9 +4,9 @@
     "name": "Northbeam Analytics",
     "status": "active",
     "category": "Software",
-    "contact_email": "billing@northbeam-analytics.com",
+    "contact_email": "billing@northbeam-analytics.example",
     "address": "410 King St W, Suite 800, Toronto, ON M5V 1K2",
-    "bank_account": "Lakeshore Commercial Bank ****4471",
+    "bank_account": "Demo Bank A (fictional) ****4471",
     "onboarded": "2023-10-16"
   },
   {
@@ -14,9 +14,9 @@
     "name": "Cedarline Facilities",
     "status": "active",
     "category": "Facilities",
-    "contact_email": "accounts@cedarline-facilities.ca",
+    "contact_email": "accounts@cedarline-facilities.example",
     "address": "88 Industrial Pkwy, Waterloo, ON N2V 1C9",
-    "bank_account": "Lakeshore Commercial Bank ****1180",
+    "bank_account": "Demo Bank A (fictional) ****1180",
     "onboarded": "2022-03-02"
   },
   {
@@ -26,7 +26,7 @@
     "category": "Office supplies",
     "contact_email": "orders@lumenpath.example",
     "address": "1205 Dundas St E, Mississauga, ON L4Y 2C5",
-    "bank_account": "Granite Trust ****9032",
+    "bank_account": "Demo Bank B (fictional) ****9032",
     "onboarded": "2021-07-19"
   },
   {
@@ -36,7 +36,7 @@
     "category": "Telecom",
     "contact_email": "business@brightwire-telecom.example",
     "address": "50 Front St E, Toronto, ON M5E 1B3",
-    "bank_account": "Granite Trust ****5527",
+    "bank_account": "Demo Bank B (fictional) ****5527",
     "onboarded": "2020-11-04"
   },
   {
@@ -46,7 +46,7 @@
     "category": "Professional services",
     "contact_email": "billing@harbourstone-legal.example",
     "address": "200 Bay St, 24th Floor, Toronto, ON M5J 2J2",
-    "bank_account": "Lakeshore Commercial Bank ****6614",
+    "bank_account": "Demo Bank A (fictional) ****6614",
     "onboarded": "2022-09-12"
   },
   {
@@ -54,9 +54,9 @@
     "name": "Northbeam Analytic Inc.",
     "status": "onboarding",
     "category": "Software",
-    "contact_email": "ap@northbeam-analytics.com",
+    "contact_email": "ap@northbeam-analytics.example",
     "address": "410 King Street West, Suite 810, Toronto, ON M5V 1K2",
-    "bank_account": "Pinecrest Savings ****2290",
+    "bank_account": "Demo Bank C (fictional) ****2290",
     "onboarded": null
   },
   {
@@ -66,7 +66,7 @@
     "category": "Cloud infrastructure",
     "contact_email": "contracts@fjordcloud.example",
     "address": "1400 Harbor Blvd, Seattle, WA 98101, USA",
-    "bank_account": "Cascade National ****7713",
+    "bank_account": "Demo Bank D (fictional) ****7713",
     "onboarded": null
   },
   {
@@ -76,7 +76,7 @@
     "category": "Professional services",
     "contact_email": "engagements@quillstone.example",
     "address": "1055 W Georgia St, Vancouver, BC V6E 3P3",
-    "bank_account": "Coastline Credit Union ****3348",
+    "bank_account": "Demo Bank E (fictional) ****3348",
     "onboarded": null
   }
 ]

@@ -62,3 +62,9 @@ def test_findings_round_trip():
 def test_findings_reject_unknown_severity():
     with pytest.raises(ValidationError):
         Findings.model_validate({"summary": "s", "findings": [{"severity": "critical", "title": "t", "detail": "d"}]})
+
+
+def test_verified_hidden_from_model_schema():
+    finding_schema = Findings.model_json_schema()["$defs"]["Finding"]
+    assert "verified" not in finding_schema["properties"]
+    assert "verified" not in finding_schema.get("required", [])

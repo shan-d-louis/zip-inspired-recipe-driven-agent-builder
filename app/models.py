@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
+from pydantic.json_schema import SkipJsonSchema
 
 # Names of the tools a recipe may enable. The tool registry (app/tools) must
 # match this list; a test checks that they stay in sync.
@@ -57,7 +58,9 @@ class Finding(BaseModel):
     detail: str
     source: str | None = None  # document or policy name
     quote: str | None = None  # short supporting passage
-    verified: bool | None = None  # set by post-processing, never by the model
+    # Set by post-processing from its own text match, never by the model.
+    # SkipJsonSchema hides it from the schema we show the model.
+    verified: SkipJsonSchema[bool | None] = None
 
 
 class Findings(BaseModel):
