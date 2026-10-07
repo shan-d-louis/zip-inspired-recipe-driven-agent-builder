@@ -32,7 +32,8 @@ GRAPH = build_graph()
 
 
 def run_timeout_seconds() -> float:
-    return float(os.getenv("RUN_TIMEOUT_SECONDS", "25"))
+    """Budget for the whole run: every LLM call, tool call and JSON retry counts against it."""
+    return float(os.getenv("RUN_TIMEOUT_S", "25"))
 
 
 async def run_recipe(recipe: Recipe, request_id: str, providers: list[Provider] | None = None) -> RunOutput:
@@ -49,7 +50,7 @@ async def run_recipe(recipe: Recipe, request_id: str, providers: list[Provider] 
         return RunOutput(ok=False, error=str(error), **base)
     except TimeoutError:
         return RunOutput(ok=False, error="The agent took too long to answer. Please try again.", **base)
-    except Exception as error:
+    except Exception as error:  # Exception, not BaseException: cancellation and Ctrl+C still propagate
         logger.error("Agent run failed with %s", type(error).__name__)  # type only: no prompts or data in logs
         return RunOutput(ok=False, error="Something went wrong while running the agent. Please try again.", **base)
 

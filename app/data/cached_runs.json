@@ -1,0 +1,116 @@
+{
+  "entries": [
+    {
+      "recipe_id": "renewal-check",
+      "request_id": "1",
+      "mode": "fake",
+      "provider": "fake",
+      "created": "2026-10-07T19:14:21+00:00",
+      "output": {
+        "ok": true,
+        "recipe_id": "renewal-check",
+        "request_id": "1",
+        "provider": "fake",
+        "markdown": "## Scripted result (fake mode)\n\nThis is a canned answer from the scripted model.\n\n> \"For any renewal of this Agreement, annual fee increases shall not exceed seven percent (7%) of the fees paid in the immediately preceding term\" — northbeam-master-agreement\n\n> \"These terms supplement your existing agreement\" — northbeam-renewal-order-form\n\n> \"Any auto-renewal clause must be flagged to the requester and to Procurement before signature\" — POL-02",
+        "findings": null,
+        "citations": [
+          {
+            "source": "northbeam-master-agreement",
+            "quote": "For any renewal of this Agreement, annual fee increases shall not exceed seven percent (7%) of the fees paid in the immediately preceding term",
+            "verified": true
+          },
+          {
+            "source": "northbeam-renewal-order-form",
+            "quote": "These terms supplement your existing agreement",
+            "verified": true
+          },
+          {
+            "source": "POL-02",
+            "quote": "Any auto-renewal clause must be flagged to the requester and to Procurement before signature",
+            "verified": true
+          }
+        ],
+        "trace": [
+          {
+            "step": 1,
+            "tool": "api_data",
+            "summary": "section='summary' -> returned request, vendor, contract, past_purchases, last_purchase_amount, more",
+            "duration_ms": 0
+          },
+          {
+            "step": 2,
+            "tool": "document_retrieval",
+            "summary": "query='Compare the renewal terms with the original contra... -> 3 match(es): northbeam-master-agreement#4, northbeam-renewal-order-form#5, northbeam-master-agreement#6",
+            "duration_ms": 0
+          },
+          {
+            "step": 3,
+            "tool": "company_context",
+            "summary": "query='Compare the renewal terms with the original contra... -> 3 match(es): POL-02, POL-01, POL-06",
+            "duration_ms": 0
+          }
+        ],
+        "error": null
+      }
+    },
+    {
+      "recipe_id": "duplicate-vendor-check",
+      "request_id": "2",
+      "mode": "fake",
+      "provider": "fake",
+      "created": "2026-10-07T19:14:21+00:00",
+      "output": {
+        "ok": true,
+        "recipe_id": "duplicate-vendor-check",
+        "request_id": "2",
+        "provider": "fake",
+        "markdown": null,
+        "findings": {
+          "summary": "Scripted result (fake mode) based on 3 passage(s).",
+          "findings": [
+            {
+              "severity": "medium",
+              "title": "Review POL-06",
+              "detail": "Scripted finding from a retrieved passage.",
+              "source": "POL-06",
+              "quote": "Before a new vendor is created, Accounts Payable must check for existing vendors with a similar name, the same email domain, the same address, or the ",
+              "verified": true
+            },
+            {
+              "severity": "medium",
+              "title": "Review POL-03",
+              "detail": "Scripted finding from a retrieved passage.",
+              "source": "POL-03",
+              "quote": "Customer data from Canadian customers must be stored and processed in Canada",
+              "verified": true
+            },
+            {
+              "severity": "medium",
+              "title": "Review POL-08",
+              "detail": "Scripted finding from a retrieved passage.",
+              "source": "POL-08",
+              "quote": "Any vendor that will store or process customer data must pass a security review before onboarding",
+              "verified": true
+            }
+          ]
+        },
+        "citations": [],
+        "trace": [
+          {
+            "step": 1,
+            "tool": "api_data",
+            "summary": "section='summary' -> returned request, vendor, contract, past_purchases, last_purchase_amount, more",
+            "duration_ms": 0
+          },
+          {
+            "step": 2,
+            "tool": "company_context",
+            "summary": "query='Check whether this new vendor may duplicate an exi... -> 3 match(es): POL-06, POL-03, POL-08",
+            "duration_ms": 0
+          }
+        ],
+        "error": null
+      }
+    }
+  ]
+}

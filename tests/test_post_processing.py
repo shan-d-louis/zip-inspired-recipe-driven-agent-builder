@@ -6,7 +6,7 @@ CONTEXT = [
         tool_name="document_retrieval",
         ai_readable_string="...",
         raw_output=[{"doc_name": "fjord-dpa", "chunk_id": "fjord-dpa#1",
-                     "text": "Data is stored in the United States.\nBackups are   replicated nightly."}],
+                     "text": "Data is stored in the United States.\nBackups are   replicated every night."}],
     )
 ]
 
@@ -26,10 +26,15 @@ def test_model_supplied_verified_is_overwritten():
 
 def test_matching_ignores_case_whitespace_and_curly_quotes():
     findings = Findings(summary="s", findings=[
-        finding("“BACKUPS are replicated\n nightly”"),
+        finding("“BACKUPS are replicated\n every night”"),
         finding("stored in the United States", source="Fjord-DPA.md"),
     ])
     assert all(f.verified for f in verify_findings(findings, CONTEXT).findings)
+
+
+def test_quotes_under_five_words_are_never_verified():
+    findings = Findings(summary="s", findings=[finding("the United States"), finding("in the United States")])
+    assert [f.verified for f in verify_findings(findings, CONTEXT).findings] == [False, False]
 
 
 def test_real_quote_with_wrong_source_or_no_quote_is_not_verified():

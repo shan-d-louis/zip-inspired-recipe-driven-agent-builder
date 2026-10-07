@@ -104,3 +104,13 @@ class RunOutput(BaseModel):
     citations: list[Citation] = []  # quotes found in markdown output
     trace: list[TraceStep] = []
     error: str | None = None  # user-facing; never contains secrets
+
+
+class RunRecord(BaseModel):
+    """A run as served by the API and kept in the run store."""
+
+    run_id: str | None  # None when nothing ran (e.g. rate limited), so nothing was stored
+    recipe_name: str
+    cached: bool
+    mode: str  # "fake" or "live": which kind of model produced this result
+    output: RunOutput

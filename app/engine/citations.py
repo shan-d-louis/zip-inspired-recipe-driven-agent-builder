@@ -39,11 +39,14 @@ def source_texts(context: list[ToolExecutionResult]) -> dict[str, list[str]]:
     return texts
 
 
+MIN_QUOTE_WORDS = 5  # shorter quotes ("the vendor", "7%") match too easily to prove anything
+
+
 def is_verified(source: str | None, quote: str | None, texts: dict[str, list[str]]) -> bool:
     if not source or not quote:
         return False
     needle = normalize(quote).strip(" .\"'")
-    if not needle:
+    if len(needle.split()) < MIN_QUOTE_WORDS:
         return False
     return any(needle in normalize(text) for text in texts.get(normalize_source(source), []))
 

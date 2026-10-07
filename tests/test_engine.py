@@ -1,5 +1,8 @@
 """End-to-end engine tests with the scripted model (no network, no keys)."""
 
+import asyncio
+import logging
+
 import pytest
 from pydantic import Field
 
@@ -160,9 +163,38 @@ async def test_invented_quote_is_marked_unverified_despite_model_claim():
 
 
 async def test_run_timeout_is_friendly(monkeypatch):
-    monkeypatch.setenv("RUN_TIMEOUT_SECONDS", "0.05")
+    monkeypatch.setenv("RUN_TIMEOUT_S", "0.05")
     output = await run_recipe(RESIDENCY, "3", providers=[("slow", SlowModel())])
     assert not output.ok and "took too long" in output.error
+
+
+class SlowWriter(ScriptedChatModel):
+    """Fast tool calls; each writing call (final answer or JSON retry) takes 0.2 s."""
+
+    async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+        if not self.tool_names:
+            await asyncio.sleep(0.2)
+        return self._generate(messages, stop, run_manager, **kwargs)
+
+
+@pytest.mark.parametrize("bad_replies,expect_ok", [(0, True), (2, False)])
+async def test_json_retries_count_against_the_run_timeout(monkeypatch, bad_replies, expect_ok):
+    monkeypatch.setenv("RUN_TIMEOUT_S", "0.5")  # 1 writing call fits (0.2 s); 3 do not (0.6 s)
+    output = await run_recipe(RESIDENCY, "3", providers=[("fake", SlowWriter(invalid_json_replies=bad_replies))])
+    assert output.ok is expect_ok
+    if not expect_ok:
+        assert "took too long" in output.error
+
+
+async def test_prompts_and_documents_never_reach_the_logs(caplog, monkeypatch):
+    monkeypatch.setenv("RUN_TIMEOUT_S", "0.1")  # keeps the error-path run short
+    caplog.set_level(logging.DEBUG)  # every logger, including LangChain and LangGraph
+    secret_prompt = "Flag conflicts for project ZEBRA-7781 under data residency policy"
+    recipe = RESIDENCY.model_copy(update={"prompt": secret_prompt})
+    await run_recipe(recipe, "3", providers=[("fake", ScriptedChatModel(invalid_json_replies=1))])
+    await run_recipe(recipe, "3", providers=[("slow", SlowModel())])  # error path too
+    assert "ZEBRA-7781" not in caplog.text
+    assert "exclusively in data centers" not in caplog.text
 
 
 async def test_all_providers_down_is_friendly():

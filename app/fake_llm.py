@@ -92,7 +92,8 @@ class ScriptedChatModel(BaseChatModel):
             if match := LABEL.match(line):
                 label = match.group(1)
                 continue
-            if label and len(line) >= 30 and not line.startswith(("#", "|")):
+            # Skip headings, tables and title lines like "POL-04 Limitation of Liability".
+            if label and len(line.split()) >= 6 and not line.startswith(("#", "|")):
                 quote = line.split(". ")[0][:150]
                 source = label.split("#")[0]
                 if source not in {s for s, _ in found}:
