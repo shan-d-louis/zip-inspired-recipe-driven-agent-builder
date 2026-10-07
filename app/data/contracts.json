@@ -1,0 +1,37 @@
+{
+  "contracts": [
+    {
+      "vendor_id": "V-1001",
+      "contract_id": "C-2025-014",
+      "title": "Northbeam Analytics Master Subscription Agreement",
+      "start_date": "2025-11-01",
+      "end_date": "2026-10-31",
+      "annual_fee": 55000,
+      "currency": "CAD",
+      "max_annual_increase_pct": 7,
+      "auto_renewal": false,
+      "notice_period_days": 90
+    },
+    {
+      "vendor_id": "V-1002",
+      "contract_id": "C-2024-031",
+      "title": "Cedarline Facilities Maintenance Agreement",
+      "start_date": "2024-04-01",
+      "end_date": "2027-03-31",
+      "annual_fee": 42000,
+      "currency": "CAD",
+      "max_annual_increase_pct": 3,
+      "auto_renewal": false,
+      "notice_period_days": 60
+    }
+  ],
+  "purchase_history": [
+    {"po": "PO-23-0412", "vendor_id": "V-1001", "date": "2023-11-01", "amount": 51500, "description": "Northbeam platform, year 1"},
+    {"po": "PO-24-0388", "vendor_id": "V-1001", "date": "2024-11-01", "amount": 53000, "description": "Northbeam platform, year 2"},
+    {"po": "PO-25-0402", "vendor_id": "V-1001", "date": "2025-11-01", "amount": 55000, "description": "Northbeam platform, year 3 (current contract)"},
+    {"po": "PO-25-0115", "vendor_id": "V-1002", "date": "2025-04-01", "amount": 42000, "description": "Facilities maintenance, annual"},
+    {"po": "PO-26-0071", "vendor_id": "V-1003", "date": "2026-02-14", "amount": 3150, "description": "Office supplies, Q1"},
+    {"po": "PO-26-0203", "vendor_id": "V-1004", "date": "2026-05-09", "amount": 18400, "description": "Plant network circuits, annual"},
+    {"po": "PO-26-0260", "vendor_id": "V-1005", "date": "2026-06-30", "amount": 22750, "description": "Commercial contract review"}
+  ]
+}

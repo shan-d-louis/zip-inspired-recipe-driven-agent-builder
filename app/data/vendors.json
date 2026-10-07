@@ -1,0 +1,82 @@
+[
+  {
+    "id": "V-1001",
+    "name": "Northbeam Analytics",
+    "status": "active",
+    "category": "Software",
+    "contact_email": "billing@northbeam-analytics.com",
+    "address": "410 King St W, Suite 800, Toronto, ON M5V 1K2",
+    "bank_account": "Lakeshore Commercial Bank ****4471",
+    "onboarded": "2023-10-16"
+  },
+  {
+    "id": "V-1002",
+    "name": "Cedarline Facilities",
+    "status": "active",
+    "category": "Facilities",
+    "contact_email": "accounts@cedarline-facilities.ca",
+    "address": "88 Industrial Pkwy, Waterloo, ON N2V 1C9",
+    "bank_account": "Lakeshore Commercial Bank ****1180",
+    "onboarded": "2022-03-02"
+  },
+  {
+    "id": "V-1003",
+    "name": "Lumenpath Office Supply",
+    "status": "active",
+    "category": "Office supplies",
+    "contact_email": "orders@lumenpath.example",
+    "address": "1205 Dundas St E, Mississauga, ON L4Y 2C5",
+    "bank_account": "Granite Trust ****9032",
+    "onboarded": "2021-07-19"
+  },
+  {
+    "id": "V-1004",
+    "name": "Brightwire Telecom",
+    "status": "active",
+    "category": "Telecom",
+    "contact_email": "business@brightwire-telecom.example",
+    "address": "50 Front St E, Toronto, ON M5E 1B3",
+    "bank_account": "Granite Trust ****5527",
+    "onboarded": "2020-11-04"
+  },
+  {
+    "id": "V-1005",
+    "name": "Harbourstone Legal LLP",
+    "status": "active",
+    "category": "Professional services",
+    "contact_email": "billing@harbourstone-legal.example",
+    "address": "200 Bay St, 24th Floor, Toronto, ON M5J 2J2",
+    "bank_account": "Lakeshore Commercial Bank ****6614",
+    "onboarded": "2022-09-12"
+  },
+  {
+    "id": "V-2001",
+    "name": "Northbeam Analytic Inc.",
+    "status": "onboarding",
+    "category": "Software",
+    "contact_email": "ap@northbeam-analytics.com",
+    "address": "410 King Street West, Suite 810, Toronto, ON M5V 1K2",
+    "bank_account": "Pinecrest Savings ****2290",
+    "onboarded": null
+  },
+  {
+    "id": "V-2002",
+    "name": "Fjord Cloud Storage",
+    "status": "onboarding",
+    "category": "Cloud infrastructure",
+    "contact_email": "contracts@fjordcloud.example",
+    "address": "1400 Harbor Blvd, Seattle, WA 98101, USA",
+    "bank_account": "Cascade National ****7713",
+    "onboarded": null
+  },
+  {
+    "id": "V-2003",
+    "name": "Quillstone Consulting",
+    "status": "onboarding",
+    "category": "Professional services",
+    "contact_email": "engagements@quillstone.example",
+    "address": "1055 W Georgia St, Vancouver, BC V6E 3P3",
+    "bank_account": "Coastline Credit Union ****3348",
+    "onboarded": null
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "renewal-check",
+    "name": "Renewal Check",
+    "prompt": "Compare the renewal terms with the original contract and our procurement policies. Report the price change versus any cap, any new or changed renewal clauses, and anything that needs approval before signing.",
+    "tools": ["api_data", "document_retrieval", "company_context"],
+    "output_format": "markdown",
+    "include_citations": true,
+    "is_preset": true,
+    "default_request_id": "1"
+  },
+  {
+    "id": "duplicate-vendor-check",
+    "name": "Duplicate Vendor Check",
+    "prompt": "Check whether this new vendor may duplicate an existing vendor. Compare name, email domain, address and bank details against our existing vendors, and apply our duplicate vendor policy.",
+    "tools": ["api_data", "company_context"],
+    "output_format": "structured",
+    "include_citations": true,
+    "is_preset": true,
+    "default_request_id": "2"
+  }
+]

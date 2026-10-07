@@ -1,0 +1,62 @@
+[
+  {
+    "id": "1",
+    "title": "Renew Northbeam Analytics platform subscription",
+    "type": "renewal",
+    "vendor_id": "V-1001",
+    "amount": 64900,
+    "currency": "CAD",
+    "requested_by": "Priya Natarajan",
+    "department": "Data & Insights",
+    "submitted": "2026-09-28",
+    "needed_by": "2026-11-01",
+    "status": "pending_review",
+    "description": "Annual renewal of the Northbeam analytics platform used for factory telemetry dashboards. Vendor sent a renewal order form for the next term.",
+    "documents": ["northbeam-master-agreement", "northbeam-renewal-order-form"]
+  },
+  {
+    "id": "2",
+    "title": "Onboard Northbeam Analytic Inc. for dashboard add-on",
+    "type": "new_vendor",
+    "vendor_id": "V-2001",
+    "amount": 12000,
+    "currency": "CAD",
+    "requested_by": "Marcus Okafor",
+    "department": "Operations",
+    "submitted": "2026-10-01",
+    "needed_by": "2026-10-20",
+    "status": "pending_review",
+    "description": "New vendor setup for a dashboard add-on module. Vendor asked that invoices be paid to a new bank account.",
+    "documents": ["northbeam-inc-vendor-application"]
+  },
+  {
+    "id": "3",
+    "title": "Onboard Fjord Cloud Storage for telemetry archive",
+    "type": "new_vendor",
+    "vendor_id": "V-2002",
+    "amount": 38000,
+    "currency": "CAD",
+    "requested_by": "Elena Varga",
+    "department": "Platform Engineering",
+    "submitted": "2026-10-02",
+    "needed_by": "2026-11-15",
+    "status": "pending_review",
+    "description": "Archive storage for robot telemetry and support logs from customers in Canada and the EU. Logs include customer site names and operator contact details.",
+    "documents": ["fjord-dpa", "fjord-security-overview"]
+  },
+  {
+    "id": "4",
+    "title": "Engage Quillstone Consulting for ERP rollout",
+    "type": "services",
+    "vendor_id": "V-2003",
+    "amount": 145000,
+    "currency": "CAD",
+    "requested_by": "Daniel Moreau",
+    "department": "Finance",
+    "submitted": "2026-10-03",
+    "needed_by": "2026-11-30",
+    "status": "pending_review",
+    "description": "Six-month consulting engagement to plan and run the ERP migration. Vendor provided their standard MSA and a statement of work.",
+    "documents": ["quillstone-msa", "quillstone-sow"]
+  }
+]
