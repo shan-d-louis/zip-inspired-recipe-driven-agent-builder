@@ -10,7 +10,6 @@ Uses LLM_MODE from the environment or .env (default: fake, no keys needed).
 
 import argparse
 import asyncio
-import logging
 import sys
 
 from dotenv import load_dotenv
@@ -18,6 +17,7 @@ from dotenv import load_dotenv
 from app import data_store
 from app.engine.graph import run_recipe
 from app.llm import log_provider_config
+from app.log_config import configure_logging
 from app.models import KNOWN_TOOLS, Recipe, RunOutput
 
 
@@ -69,7 +69,7 @@ def render(recipe: Recipe, output: RunOutput) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     load_dotenv()
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    configure_logging()
     if hasattr(sys.stdout, "reconfigure"):  # Windows pipes default to cp1252
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     args = parse_args(argv)

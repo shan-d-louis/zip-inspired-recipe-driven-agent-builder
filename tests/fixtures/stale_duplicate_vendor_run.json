@@ -1,0 +1,81 @@
+{
+  "recipe_id": "duplicate-vendor-check",
+  "request_id": "2",
+  "mode": "live",
+  "provider": "groq",
+  "created": "2026-10-07T22:02:39+00:00",
+  "output": {
+    "ok": true,
+    "recipe_id": "duplicate-vendor-check",
+    "request_id": "2",
+    "provider": "groq",
+    "markdown": null,
+    "findings": {
+      "summary": "The new vendor Northbeam Analytic Inc. appears to duplicate an existing vendor Northbeam Analytics based on email domain and address similarity, but has different bank account details.",
+      "findings": [
+        {
+          "severity": "high",
+          "title": "Name/email domain/address duplicate vendor",
+          "detail": "The new vendor shares the same email domain and a very similar address with an existing vendor, indicating a duplicate.",
+          "source": "api_data#vendor",
+          "quote": "email_domain: northbeam-analytics.example",
+          "verified": true
+        },
+        {
+          "severity": "high",
+          "title": "Name/email domain/address duplicate vendor",
+          "detail": "The existing vendor record shows the same email domain and a matching address, confirming duplication.",
+          "source": "api_data#existing_vendors-1",
+          "quote": "email_domain: northbeam-analytics.example",
+          "verified": true
+        },
+        {
+          "severity": "medium",
+          "title": "Bank account mismatch for duplicate vendor",
+          "detail": "Although the vendor appears duplicated, the bank account information differs between the new and existing records.",
+          "source": "api_data#vendor",
+          "quote": "bank_account: Demo Bank C (fictional) ****2290",
+          "verified": true
+        },
+        {
+          "severity": "medium",
+          "title": "Bank account mismatch for duplicate vendor",
+          "detail": "The existing vendor lists a different bank account, indicating a discrepancy that requires verification.",
+          "source": "api_data#existing_vendors-1",
+          "quote": "bank_account: Demo Bank A (fictional) ****4471",
+          "verified": true
+        },
+        {
+          "severity": "info",
+          "title": "Duplicate vendor policy not found",
+          "detail": "The duplicate vendor policy was not found in the retrieved passages, so it could not be quoted.",
+          "source": null,
+          "quote": null,
+          "verified": false
+        }
+      ]
+    },
+    "citations": [],
+    "trace": [
+      {
+        "step": 1,
+        "tool": "api_data",
+        "summary": "section='vendor' -> returned vendor",
+        "duration_ms": 0
+      },
+      {
+        "step": 2,
+        "tool": "api_data",
+        "summary": "section='existing_vendors' -> returned existing_vendors",
+        "duration_ms": 0
+      }
+    ],
+    "error": null,
+    "usage": {
+      "llm_calls": 4,
+      "input_tokens": 3284,
+      "output_tokens": 581,
+      "duration_ms": 3607
+    }
+  }
+}

@@ -15,7 +15,7 @@ from pydantic import ValidationError
 from app import data_store, prompts
 from app.engine.citations import extract_citations, verify_findings
 from app.engine.state import AgentState
-from app.llm import invoke_with_fallback
+from app.llm import ToolCallRejected, invoke_with_fallback
 from app.models import Findings, OutputFormat, ToolExecutionResult, TraceStep
 from app.tools import build_tools
 
@@ -29,11 +29,14 @@ class EngineError(Exception):
 
 
 def max_agent_steps() -> int:
-    return int(os.getenv("MAX_AGENT_STEPS", "4"))
+    return int(os.getenv("MAX_AGENT_STEPS", "5"))
 
 
-def _providers(config: RunnableConfig):
-    return config["configurable"]["providers"]
+async def _llm(config: RunnableConfig, messages, tools=None):
+    """One LLM call with this run's providers, counted in this run's usage meter."""
+    configurable = config["configurable"]
+    return await invoke_with_fallback(messages, tools=tools, providers=configurable["providers"],
+                                      usage=configurable.get("usage"))
 
 
 # --- 1. Preprocessing: no LLM. Resolve the request, vendor and documents. ---
@@ -92,7 +95,16 @@ async def orchestration(state: AgentState, config: RunnableConfig) -> dict:
     provider = None
 
     for _ in range(max_agent_steps()):  # hard cap on LLM calls in this loop
-        reply, provider = await invoke_with_fallback(messages, tools=lc_tools, providers=_providers(config))
+        try:
+            reply, provider = await _llm(config, messages, tools=lc_tools)
+        except ToolCallRejected as rejection:
+            # The model asked for something that isn't a tool. Say so and let it retry (uses a step).
+            messages.append(HumanMessage(content=(
+                f"Your tool call was rejected: {rejection}. The only tools are: {', '.join(tools)}. "
+                "Use one of them, or reply 'done'.")))
+            trace.append(TraceStep(step=len(trace) + 1, tool="(invalid call)",
+                                   summary="model called a tool that doesn't exist; asked to retry", duration_ms=0))
+            continue
         messages.append(reply)
         if not reply.tool_calls:
             break
@@ -144,7 +156,7 @@ async def final_llm_call(state: AgentState, config: RunnableConfig) -> dict:
         SystemMessage(content=f"{prompts.FINAL_SYSTEM}\n\n{output_format}"),
         HumanMessage(content=f"Task: {recipe.prompt}\n\nEvidence:\n{evidence}"),
     ]
-    reply, provider = await invoke_with_fallback(messages, providers=_providers(config))  # no tools bound
+    reply, provider = await _llm(config, messages)  # no tools bound
     return {"final_messages": [*messages, reply], "final_llm_result": reply.text, "provider": provider}
 
 
@@ -178,7 +190,7 @@ async def post_processing(state: AgentState, config: RunnableConfig) -> dict:
                 return {"error": "The agent could not produce valid structured output after 3 tries. "
                                  "Please run it again or switch to Markdown."}
             messages = [*messages, HumanMessage(content=prompts.json_retry_message(str(error)[:500]))]
-            reply, provider = await invoke_with_fallback(messages, providers=_providers(config))
+            reply, provider = await _llm(config, messages)
             messages.append(reply)
             text = reply.text
     # Always overwrite 'verified' from our own text match; the model's value is ignored.

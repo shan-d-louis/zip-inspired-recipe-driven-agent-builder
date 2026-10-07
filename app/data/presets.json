@@ -2,9 +2,9 @@
   {
     "id": "renewal-check",
     "name": "Renewal Check",
-    "prompt": "Compare the renewal terms with the original contract and our procurement policies. Report the price change versus any cap, any new or changed renewal clauses, and anything that needs approval before signing.",
+    "prompt": "Review this renewal. Use api_data once (section 'summary'). Use document_retrieval to find the order form's additional terms, including automatic renewal and the notice period. Use company_context for our renewal and auto-renewal policies. Write a separate finding for each: 1) the new price vs the contract's price-increase cap (give the % increase); 2) the order form's automatic renewal and notice terms; 3) each policy that applies, quoting it, and what needs approval before signing.",
     "tools": ["api_data", "document_retrieval", "company_context"],
-    "output_format": "markdown",
+    "output_format": "structured",
     "include_citations": true,
     "is_preset": true,
     "default_request_id": "1"
@@ -12,7 +12,7 @@
   {
     "id": "duplicate-vendor-check",
     "name": "Duplicate Vendor Check",
-    "prompt": "Check whether this new vendor may duplicate an existing vendor. Compare name, email domain, address and bank details against our existing vendors, and apply our duplicate vendor policy.",
+    "prompt": "Check whether this new vendor duplicates an existing vendor. Use api_data with section 'vendor' and section 'existing_vendors', then company_context for our duplicate vendor policy. Write separate findings for: the name or address match, the email domain match, the new vendor's bank account vs the matching vendor's, and the duplicate vendor policy (quote it). Give each finding a distinct title saying whose record it quotes, e.g. 'New vendor: ...' or 'Existing vendor: ...'.",
     "tools": ["api_data", "company_context"],
     "output_format": "structured",
     "include_citations": true,

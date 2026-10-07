@@ -12,10 +12,12 @@ from app.engine.graph import run_recipe
 from app.engine.nodes import strip_fences
 from app.engine.run import main
 from app.fake_llm import ScriptedChatModel
-from app.models import Recipe
+from app.models import OutputFormat, Recipe
 from tests.test_llm import BrokenModel, SlowModel, StatusError
 
 PRESETS = {p.id: p for p in data_store.load_presets()}
+# The written-report path, using the Renewal Check settings but markdown output.
+RENEWAL_REPORT = PRESETS["renewal-check"].model_copy(update={"id": "renewal-report", "output_format": OutputFormat.MARKDOWN})
 RESIDENCY = Recipe(
     id="data-residency-check", name="Data Residency Check",
     prompt="Flag any conflict between this vendor's data terms and our data residency policy",
@@ -41,8 +43,8 @@ async def run(recipe, request_id, **model_options):
 # --- Happy paths ---
 
 
-async def test_renewal_preset_markdown_with_verified_citations():
-    output, _ = await run(PRESETS["renewal-check"], "1")
+async def test_renewal_markdown_report_with_verified_citations():
+    output, _ = await run(RENEWAL_REPORT, "1")
     assert output.ok and output.provider == "fake"
     assert [s.tool for s in output.trace] == ["api_data", "document_retrieval", "company_context"]
     assert all(s.summary and s.duration_ms >= 0 for s in output.trace)
@@ -68,8 +70,10 @@ async def test_unknown_request_fails_clearly_before_any_llm_call():
 # --- Orchestration limits ---
 
 
-@pytest.mark.parametrize("env_steps,expected", [(None, 4), ("2", 2)])
+@pytest.mark.parametrize("env_steps,expected", [(None, 5), ("2", 2)])
 async def test_step_cap(monkeypatch, env_steps, expected):
+    monkeypatch.delenv("MAX_AGENT_STEPS", raising=False)  # .env may set it
+    monkeypatch.setattr(nodes, "MAX_CONTEXT_CHARS", 100_000)  # test the step cap alone, not the context cap
     if env_steps:
         monkeypatch.setenv("MAX_AGENT_STEPS", env_steps)
     output, model = await run(RESIDENCY, "3", keep_calling="new_args")
@@ -93,7 +97,7 @@ async def test_repeated_identical_call_reuses_earlier_result(monkeypatch):
     update = await orchestrate(RecordingModel(keep_calling="same_args"))
     assert len(searches) == 1  # the tool really ran once
     assert len(update["accumulated_context"]) == 1
-    assert [s.summary for s in update["trace"][1:]] == ["repeated call, reused earlier result"] * 3
+    assert [s.summary for s in update["trace"][1:]] == ["repeated call, reused earlier result"] * (nodes.max_agent_steps() - 1)
 
 
 async def test_context_is_capped(monkeypatch):
@@ -154,7 +158,7 @@ async def test_invented_quote_is_marked_unverified_despite_model_claim():
     structured, _ = await run(RESIDENCY, "3", invent_quote=True)
     first, *rest = [f.verified for f in structured.findings.findings]
     assert first is False and rest and all(rest)
-    markdown, _ = await run(PRESETS["renewal-check"], "1", invent_quote=True)
+    markdown, _ = await run(RENEWAL_REPORT, "1", invent_quote=True)
     first, *rest = [c.verified for c in markdown.citations]
     assert first is False and rest and all(rest)
 
@@ -217,3 +221,42 @@ def test_cli_runs_in_fake_mode(monkeypatch, capsys, argv):
     assert main(argv) == 0
     out = capsys.readouterr().out
     assert "Provider: fake" in out and "Trace:" in out and "[verified]" in out
+
+
+class MeteredModel(ScriptedChatModel):
+    """Scripted model that reports token usage like Groq does (100 in, 10 out per call)."""
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        result = super()._generate(messages, stop, run_manager, **kwargs)
+        result.generations[0].message.usage_metadata = {"input_tokens": 100, "output_tokens": 10, "total_tokens": 110}
+        return result
+
+
+async def test_run_logs_token_usage_but_no_content(caplog):
+    caplog.set_level(logging.INFO)
+    await run_recipe(RESIDENCY, "3", providers=[("groq", MeteredModel())])
+    # 2 tool calls + 1 "done" + 1 final answer = 4 LLM calls
+    assert "llm_calls=4 input_tokens=400 output_tokens=40 total_tokens=440" in caplog.text
+    assert RESIDENCY.prompt not in caplog.text
+
+
+class ToolUseFailed(Exception):
+    """Shaped like Groq's 400 when the model calls a tool that doesn't exist."""
+
+    status_code = 400
+    body = {"error": {"code": "tool_use_failed",
+                      "message": "attempted to call tool 'existing_vendors' which was not in request.tools"}}
+
+
+class InventsAToolOnce(ScriptedChatModel):
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        if self.tool_names and not any(type(m).__name__ == "AIMessage" for m in messages) \
+                and not any("rejected" in str(m.content) for m in messages):
+            raise ToolUseFailed()
+        return super()._generate(messages, stop, run_manager, **kwargs)
+
+
+async def test_rejected_tool_call_is_fed_back_and_the_run_continues():
+    output = await run_recipe(RESIDENCY, "3", providers=[("groq", InventsAToolOnce())])
+    assert output.ok
+    assert [s.tool for s in output.trace] == ["(invalid call)", *RESIDENCY.tools]

@@ -28,9 +28,9 @@ Invoiced annually in advance on November 1, 2026. Payment due net 30. Late payme
 
 Your team now gets faster dashboard refresh, a new anomaly detection module in beta, and a dedicated customer success manager. We are excited to keep supporting the Maple Robotics data team.
 
-## Additional Terms
+## Additional Terms (renewal and notice)
 
-These terms supplement your existing agreement. Pricing excludes applicable taxes. Northbeam may update its acceptable use policy from time to time. This subscription will automatically renew for successive twelve (12) month terms unless either party gives written notice at least sixty (60) days before the end of the then-current term. Renewal pricing for future terms will be based on Northbeam's then-current list price. Where these Additional Terms conflict with the existing agreement, these Additional Terms prevail.
+These terms supplement your existing agreement. Pricing excludes applicable taxes. Northbeam may update its acceptable use policy from time to time. This subscription will automatically renew for successive twelve (12) month terms unless either party gives written notice of non-renewal at least sixty (60) days before the end of the then-current term. Renewal pricing for future terms will be based on Northbeam's then-current list price. Where these Additional Terms conflict with the existing agreement, these Additional Terms prevail.
 
 ## Acceptance
 

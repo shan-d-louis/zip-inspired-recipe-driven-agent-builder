@@ -25,21 +25,29 @@ ORCHESTRATION_SYSTEM = (
 FINAL_SYSTEM = (
     "You are the writing step of a procurement review agent at Maple Robotics. "
     "Answer the reviewer's task using only the evidence provided. If the evidence does not "
-    "support a point, say so instead of guessing. " + DATA_RULE
+    "support a point, say so instead of guessing. You only see retrieved passages, not whole "
+    "documents: never claim a document 'contains no' something; say it was 'not found in the "
+    "retrieved passages'. " + DATA_RULE
 )
 
 MARKDOWN_FORMAT = "Write a concise answer in markdown: a one-line verdict, then short headings and bullet points."
 
+RECORD_QUOTES = ("To cite a record, quote one whole 'field: value' line; its source is the record's label "
+                 "(e.g. api_data#vendor).")
+
 MARKDOWN_CITATIONS = (
-    'Support each key point with a short exact quote from the evidence, on its own line, formatted as:\n'
+    "Every claim about a contract, document, record or policy term needs an exact quote of at least 5 words "
+    "from the evidence, on its own line:\n"
     '> "exact words copied from the evidence" — source\n'
-    "where source is the document name (e.g. fjord-dpa) or policy id (e.g. POL-03) shown in the evidence labels."
+    "where source is the evidence label (e.g. northbeam-renewal-order-form#5 or POL-01). "
+    + RECORD_QUOTES + " If you can't quote it, don't state it."
 )
 
 STRUCTURED_CITATIONS = (
-    "For each finding, set source to the document name (e.g. fjord-dpa) or policy id (e.g. POL-03) "
-    "from the evidence labels, and quote to a short passage (under 200 characters) copied word for "
-    "word from that source."
+    "Every finding needs a source and a quote. source = the evidence label (e.g. fjord-dpa#3 or POL-03); "
+    "quote = 5 to 30 words copied exactly from that source. " + RECORD_QUOTES + " "
+    "When a vendor term conflicts with a policy, write TWO findings: one quoting the vendor document, "
+    "one quoting the policy. Never state a policy requirement without quoting the policy."
 )
 
 NO_CITATIONS = "Do not include quotes. Set source and quote to null."

@@ -5,31 +5,43 @@
       "request_id": "1",
       "mode": "fake",
       "provider": "fake",
-      "created": "2026-10-07T19:14:21+00:00",
+      "created": "2026-10-07T22:02:10+00:00",
       "output": {
         "ok": true,
         "recipe_id": "renewal-check",
         "request_id": "1",
         "provider": "fake",
-        "markdown": "## Scripted result (fake mode)\n\nThis is a canned answer from the scripted model.\n\n> \"For any renewal of this Agreement, annual fee increases shall not exceed seven percent (7%) of the fees paid in the immediately preceding term\" — northbeam-master-agreement\n\n> \"These terms supplement your existing agreement\" — northbeam-renewal-order-form\n\n> \"Any auto-renewal clause must be flagged to the requester and to Procurement before signature\" — POL-02",
-        "findings": null,
-        "citations": [
-          {
-            "source": "northbeam-master-agreement",
-            "quote": "For any renewal of this Agreement, annual fee increases shall not exceed seven percent (7%) of the fees paid in the immediately preceding term",
-            "verified": true
-          },
-          {
-            "source": "northbeam-renewal-order-form",
-            "quote": "These terms supplement your existing agreement",
-            "verified": true
-          },
-          {
-            "source": "POL-02",
-            "quote": "Any auto-renewal clause must be flagged to the requester and to Procurement before signature",
-            "verified": true
-          }
-        ],
+        "markdown": null,
+        "findings": {
+          "summary": "Scripted result (fake mode) based on 3 passage(s).",
+          "findings": [
+            {
+              "severity": "medium",
+              "title": "Review northbeam-renewal-order-form",
+              "detail": "Scripted finding from a retrieved passage.",
+              "source": "northbeam-renewal-order-form",
+              "quote": "These terms supplement your existing agreement",
+              "verified": true
+            },
+            {
+              "severity": "medium",
+              "title": "Review northbeam-master-agreement",
+              "detail": "Scripted finding from a retrieved passage.",
+              "source": "northbeam-master-agreement",
+              "quote": "This Master Subscription Agreement is entered into on November 1, 2025 between Maple Robotics Inc",
+              "verified": true
+            },
+            {
+              "severity": "medium",
+              "title": "Review POL-02",
+              "detail": "Scripted finding from a retrieved passage.",
+              "source": "POL-02",
+              "quote": "Any auto-renewal clause must be flagged to the requester and to Procurement before signature",
+              "verified": true
+            }
+          ]
+        },
+        "citations": [],
         "trace": [
           {
             "step": 1,
@@ -40,17 +52,23 @@
           {
             "step": 2,
             "tool": "document_retrieval",
-            "summary": "query='Compare the renewal terms with the original contra... -> 3 match(es): northbeam-master-agreement#4, northbeam-renewal-order-form#5, northbeam-master-agreement#6",
-            "duration_ms": 0
+            "summary": "query=\"Review this renewal. Use api_data once (section 's... -> 3 match(es): northbeam-renewal-order-form#5, northbeam-renewal-order-form#6, northbeam-master-agreement#1",
+            "duration_ms": 1
           },
           {
             "step": 3,
             "tool": "company_context",
-            "summary": "query='Compare the renewal terms with the original contra... -> 3 match(es): POL-02, POL-01, POL-06",
-            "duration_ms": 0
+            "summary": "query=\"Review this renewal. Use api_data once (section 's... -> 3 match(es): POL-02, POL-04, POL-01",
+            "duration_ms": 1
           }
         ],
-        "error": null
+        "error": null,
+        "usage": {
+          "llm_calls": 5,
+          "input_tokens": null,
+          "output_tokens": null,
+          "duration_ms": 22
+        }
       }
     },
     {
@@ -58,7 +76,7 @@
       "request_id": "2",
       "mode": "fake",
       "provider": "fake",
-      "created": "2026-10-07T19:14:21+00:00",
+      "created": "2026-10-07T22:02:10+00:00",
       "output": {
         "ok": true,
         "recipe_id": "duplicate-vendor-check",
@@ -78,10 +96,10 @@
             },
             {
               "severity": "medium",
-              "title": "Review POL-03",
+              "title": "Review POL-02",
               "detail": "Scripted finding from a retrieved passage.",
-              "source": "POL-03",
-              "quote": "Customer data from Canadian customers must be stored and processed in Canada",
+              "source": "POL-02",
+              "quote": "Any auto-renewal clause must be flagged to the requester and to Procurement before signature",
               "verified": true
             },
             {
@@ -105,11 +123,199 @@
           {
             "step": 2,
             "tool": "company_context",
-            "summary": "query='Check whether this new vendor may duplicate an exi... -> 3 match(es): POL-06, POL-03, POL-08",
+            "summary": "query=\"Check whether this new vendor duplicates an existi... -> 3 match(es): POL-06, POL-02, POL-08",
             "duration_ms": 0
           }
         ],
-        "error": null
+        "error": null,
+        "usage": {
+          "llm_calls": 4,
+          "input_tokens": null,
+          "output_tokens": null,
+          "duration_ms": 7
+        }
+      }
+    },
+    {
+      "recipe_id": "renewal-check",
+      "request_id": "1",
+      "mode": "live",
+      "provider": "groq",
+      "created": "2026-10-07T22:02:31+00:00",
+      "output": {
+        "ok": true,
+        "recipe_id": "renewal-check",
+        "request_id": "1",
+        "provider": "groq",
+        "markdown": null,
+        "findings": {
+          "summary": "The renewal exceeds the allowed price increase and contains auto‑renewal and notice terms that conflict with Maple Robotics policies, requiring additional approvals before signing.",
+          "findings": [
+            {
+              "severity": "high",
+              "title": "Renewal price increase exceeds 7% cap",
+              "detail": "The renewal amount is CAD 64,900 versus the prior annual fee of CAD 55,000, an 18% increase, which exceeds the contract's 7% maximum increase.",
+              "source": "api_data#request",
+              "quote": "amount: 64900",
+              "verified": true
+            },
+            {
+              "severity": "high",
+              "title": "Contractual price‑increase limit breached",
+              "detail": "The contract permits a maximum annual increase of 7%, but the proposed renewal represents an 18% rise.",
+              "source": "api_data#contract",
+              "quote": "max_annual_increase_pct: 7",
+              "verified": true
+            },
+            {
+              "severity": "medium",
+              "title": "Automatic renewal clause in order form",
+              "detail": "The order form adds a clause that the subscription will automatically renew for successive twelve‑month terms unless notice is given.",
+              "source": "northbeam-renewal-order-form#5",
+              "quote": "This subscription will automatically renew for successive twelve (12) month terms unless either party gives written notice of non-renewal at least sixty (60) days before the end of the then-current term.",
+              "verified": true
+            },
+            {
+              "severity": "medium",
+              "title": "Notice period for non‑renewal in order form",
+              "detail": "The order form requires a 60‑day written notice to avoid automatic renewal, shorter than the company’s required 90‑day notice period.",
+              "source": "northbeam-renewal-order-form#5",
+              "quote": "unless either party gives written notice of non-renewal at least sixty (60) days before the end of the then-current term.",
+              "verified": true
+            },
+            {
+              "severity": "info",
+              "title": "Policy on renewal price increases",
+              "detail": "Company policy states renewals must not increase the annual price by more than 7% and any increase above 7% requires vendor justification and Finance approval.",
+              "source": "POL-01",
+              "quote": "Software and service renewals must not increase the annual price by more than 7% over the prior term for the same scope. Any renewal above 7% requires written justification from the vendor and approval from Finance before signature.",
+              "verified": true
+            },
+            {
+              "severity": "info",
+              "title": "Policy on auto‑renewal clauses",
+              "detail": "Company policy requires auto‑renewal clauses to be flagged and mandates a non‑renewal notice period of at least 90 days; clauses allowing vendor‑set future prices are not acceptable.",
+              "source": "POL-02",
+              "quote": "Any auto-renewal clause must be flagged to the requester and to Procurement before signature. Maple Robotics requires a non-renewal notice period of at least 90 days. Clauses that let the vendor set future renewal prices at its then-current list price are not acceptable.",
+              "verified": true
+            }
+          ]
+        },
+        "citations": [],
+        "trace": [
+          {
+            "step": 1,
+            "tool": "api_data",
+            "summary": "section='summary' -> returned request, vendor, contract, past_purchases, last_purchase_amount, more",
+            "duration_ms": 0
+          },
+          {
+            "step": 2,
+            "tool": "document_retrieval",
+            "summary": "query='automatic renewal notice period' -> 3 match(es): northbeam-master-agreement#5, northbeam-renewal-order-form#5, northbeam-renewal-order-form#1",
+            "duration_ms": 0
+          },
+          {
+            "step": 3,
+            "tool": "company_context",
+            "summary": "query='renewal price increase cap approval' -> 3 match(es): POL-01, POL-02, POL-04",
+            "duration_ms": 0
+          }
+        ],
+        "error": null,
+        "usage": {
+          "llm_calls": 5,
+          "input_tokens": 5590,
+          "output_tokens": 955,
+          "duration_ms": 3999
+        }
+      }
+    },
+    {
+      "recipe_id": "duplicate-vendor-check",
+      "request_id": "2",
+      "mode": "live",
+      "provider": "groq",
+      "created": "2026-10-07T22:07:21+00:00",
+      "output": {
+        "ok": true,
+        "recipe_id": "duplicate-vendor-check",
+        "request_id": "2",
+        "provider": "groq",
+        "markdown": null,
+        "findings": {
+          "summary": "The new vendor Northbeam Analytic Inc. appears to duplicate an existing vendor Northbeam Analytics based on matching name components, email domain, and address, though the bank account differs. The duplicate vendor policy requires verification before creation.",
+          "findings": [
+            {
+              "severity": "high",
+              "title": "New vendor: address",
+              "detail": "The new vendor's address closely matches an existing vendor's address, indicating a potential duplicate.",
+              "source": "api_data#vendor",
+              "quote": "address: 410 King Street West, Suite 810, Toronto, ON M5V 1K2",
+              "verified": true
+            },
+            {
+              "severity": "high",
+              "title": "Existing vendor: address",
+              "detail": "The existing vendor's address is nearly identical to the new vendor's address, supporting a duplicate suspicion.",
+              "source": "api_data#existing_vendors-1",
+              "quote": "address: 410 King St W, Suite 800, Toronto, ON M5V 1K2",
+              "verified": true
+            },
+            {
+              "severity": "high",
+              "title": "New vendor: email domain",
+              "detail": "The new vendor uses the same email domain as an existing vendor, a key duplicate indicator.",
+              "source": "api_data#vendor",
+              "quote": "email_domain: northbeam-analytics.example",
+              "verified": true
+            },
+            {
+              "severity": "high",
+              "title": "New vendor: bank account",
+              "detail": "The new vendor's bank account differs from the existing vendor's, but bank details must still be verified per policy.",
+              "source": "api_data#vendor",
+              "quote": "bank_account: Demo Bank C (fictional) ****2290",
+              "verified": true
+            },
+            {
+              "severity": "info",
+              "title": "Duplicate vendor policy",
+              "detail": "Policy requires checking for existing vendors with similar name, same email domain, or same address before creating a new vendor.",
+              "source": "POL-06",
+              "quote": "Before a new vendor is created, Accounts Payable must check for existing vendors with a similar name, the same email domain, the same address, or the same tax number.",
+              "verified": true
+            }
+          ]
+        },
+        "citations": [],
+        "trace": [
+          {
+            "step": 1,
+            "tool": "api_data",
+            "summary": "section='vendor' -> returned vendor",
+            "duration_ms": 0
+          },
+          {
+            "step": 2,
+            "tool": "api_data",
+            "summary": "section='existing_vendors' -> returned existing_vendors",
+            "duration_ms": 0
+          },
+          {
+            "step": 3,
+            "tool": "company_context",
+            "summary": "query='duplicate vendor policy' -> 3 match(es): POL-06, POL-08, POL-04",
+            "duration_ms": 0
+          }
+        ],
+        "error": null,
+        "usage": {
+          "llm_calls": 5,
+          "input_tokens": 4949,
+          "output_tokens": 1137,
+          "duration_ms": 4781
+        }
       }
     }
   ]

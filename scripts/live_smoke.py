@@ -18,6 +18,7 @@ from langchain_core.messages import HumanMessage  # noqa: E402
 
 from app import llm  # noqa: E402
 from app.tools import build_tools  # noqa: E402
+from scripts.live_common import ROOT, utf8_console  # noqa: E402
 
 PROMPT = "Use the company_context tool to look up our data residency policy."
 
@@ -41,7 +42,8 @@ async def check(name: str, model) -> bool:
 
 
 async def main() -> int:
-    load_dotenv()
+    utf8_console()
+    load_dotenv(ROOT / ".env")  # the repo's .env, wherever the script is run from
     os.environ["LLM_MODE"] = "live"
     providers = llm.get_providers()
     print(f"Configured providers: {', '.join(name for name, _ in providers)}")

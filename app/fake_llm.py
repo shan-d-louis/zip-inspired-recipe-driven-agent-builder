@@ -22,7 +22,9 @@ from pydantic import Field, PrivateAttr
 from app.prompts import JSON_INSTRUCTION
 from app.tools.base import MAX_QUERY_CHARS
 
-LABEL = re.compile(r"^\[([\w-]+(?:#\d+)?)\]$")  # "[fjord-dpa#3]" or "[POL-03]" as printed by the tools
+# Evidence labels as printed by the retrieval tools: "[fjord-dpa#3]" or "[POL-03]".
+# (api_data's "[vendor]"-style section headings are not labels.)
+LABEL = re.compile(r"^\[([\w-]+#\d+|POL-\d+)\]$")
 
 
 INVENTED_QUOTE = "Customer data will be stored only in Canada"  # appears in no document

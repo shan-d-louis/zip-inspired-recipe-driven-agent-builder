@@ -3,13 +3,14 @@
 import asyncio
 import logging
 import os
+import time
 
 from langgraph.graph import END, START, StateGraph
 
 from app.engine.nodes import EngineError, final_llm_call, orchestration, post_processing, preprocessing
 from app.engine.state import AgentState
-from app.llm import LLMUnavailable, Provider, get_providers
-from app.models import OutputFormat, Recipe, RunOutput
+from app.llm import LLMUnavailable, Provider, UsageMeter, get_providers
+from app.models import OutputFormat, Recipe, RunOutput, RunUsage
 
 logger = logging.getLogger(__name__)
 
@@ -37,13 +38,29 @@ def run_timeout_seconds() -> float:
 
 
 async def run_recipe(recipe: Recipe, request_id: str, providers: list[Provider] | None = None) -> RunOutput:
-    """Run one agent. Never raises: failures come back as ok=False with a friendly error."""
+    """Run one agent. Never raises: failures come back as ok=False with a friendly error.
+
+    Logs one line per run with its cost (LLM calls and tokens), never content.
+    """
+    usage = UsageMeter()
+    start = time.perf_counter()
+    output = await _run(recipe, request_id, providers, usage)
+    duration_ms = int((time.perf_counter() - start) * 1000)
+    logger.info("Run %s on request %s: ok=%s provider=%s %s duration_ms=%d", recipe.id, request_id, output.ok,
+                output.provider or "-", usage.describe(), duration_ms)
+    return output.model_copy(update={"usage": RunUsage(
+        llm_calls=usage.calls, duration_ms=duration_ms,
+        input_tokens=usage.input_tokens if usage.reported else None,
+        output_tokens=usage.output_tokens if usage.reported else None)})
+
+
+async def _run(recipe: Recipe, request_id: str, providers: list[Provider] | None, usage: UsageMeter) -> RunOutput:
     base = {"recipe_id": recipe.id, "request_id": request_id}
     try:
         providers = providers if providers is not None else get_providers()
         state = await asyncio.wait_for(
             GRAPH.ainvoke({"recipe": recipe, "request_id": request_id},
-                          config={"configurable": {"providers": providers}}),
+                          config={"configurable": {"providers": providers, "usage": usage}}),
             timeout=run_timeout_seconds(),
         )
     except (EngineError, LLMUnavailable) as error:

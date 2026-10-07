@@ -247,3 +247,14 @@ def test_custom_recipes_capped_oldest_evicted_presets_kept():
     ids = [store.create(name=f"r{i}", prompt="p", tools=["api_data"], output_format="markdown").id for i in range(4)]
     assert store.get(ids[0]) is None and all(store.get(i) for i in ids[1:])
     assert store.get("renewal-check").is_preset
+
+
+def test_clear_removes_only_that_preset_in_that_mode(tmp_path):
+    from scripts.precompute_presets import clear
+
+    path = tmp_path / "cached_runs.json"
+    entries = [{"recipe_id": r, "mode": m} for r in ("renewal-check", "duplicate-vendor-check") for m in ("fake", "live")]
+    path.write_text(json.dumps({"entries": entries}))
+    assert clear(path, "live", {"duplicate-vendor-check"}) == 1
+    left = {(e["recipe_id"], e["mode"]) for e in json.loads(path.read_text())["entries"]}
+    assert left == {("renewal-check", "fake"), ("renewal-check", "live"), ("duplicate-vendor-check", "fake")}

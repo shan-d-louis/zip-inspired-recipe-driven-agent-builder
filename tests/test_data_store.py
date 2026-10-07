@@ -61,7 +61,7 @@ def test_eight_policies():
 def test_presets():
     presets = {p.id: p for p in data_store.load_presets()}
     assert set(presets) == {"renewal-check", "duplicate-vendor-check"}
-    assert presets["renewal-check"].output_format is OutputFormat.MARKDOWN
+    assert presets["renewal-check"].output_format is OutputFormat.STRUCTURED
     assert presets["renewal-check"].default_request_id == "1"
     assert presets["duplicate-vendor-check"].output_format is OutputFormat.STRUCTURED
     assert presets["duplicate-vendor-check"].default_request_id == "2"
@@ -177,3 +177,17 @@ def test_chunker_keeps_heading_with_its_paragraph():
             for chunk in data_store.chunk_document(doc["name"], doc["text"]):
                 last_block = chunk.text.split("\n\n")[-1]
                 assert not last_block.startswith("#"), f"{chunk.chunk_id} ends with a heading"
+
+
+def test_numbers_match_with_or_without_thousands_separators():
+    assert data_store.tokenize("CAD 64,900 and 1,250,000") == ["cad", "64900", "1250000"]
+    assert data_store.tokenize("64\u202f900") == ["64900"]
+    assert data_store.tokenize("12, 300 apples") == ["12", "300", "apples"]  # a list, not a number
+    top = data_store.bm25_search("64900", data_store.request_chunks("1"), k=3)
+    assert any("64,900" in c.text for c in top)
+
+
+def test_renewal_preset_wording_finds_the_auto_renewal_clause():
+    top = data_store.bm25_search("order form additional terms automatic renewal notice period",
+                                 data_store.request_chunks("1"), k=3)
+    assert any(KEY_QUOTES["northbeam-renewal-order-form"] in c.text for c in top)

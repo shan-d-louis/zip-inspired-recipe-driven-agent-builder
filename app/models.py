@@ -92,6 +92,15 @@ class ToolExecutionResult(BaseModel):
     raw_output: Any  # what post-processing uses (e.g. chunks for citation checks)
 
 
+class RunUsage(BaseModel):
+    """What a run cost. Token counts are None when the provider doesn't report them."""
+
+    llm_calls: int
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    duration_ms: int
+
+
 class RunOutput(BaseModel):
     """Everything one agent run produced; the API wraps this in Step 5."""
 
@@ -104,6 +113,7 @@ class RunOutput(BaseModel):
     citations: list[Citation] = []  # quotes found in markdown output
     trace: list[TraceStep] = []
     error: str | None = None  # user-facing; never contains secrets
+    usage: RunUsage | None = None  # for logs and scripts; not exposed in the API
 
 
 class RunRecord(BaseModel):

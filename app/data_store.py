@@ -174,8 +174,15 @@ STOPWORDS = {
 }
 
 
+# A thousands separator between digit groups: "64,900", "64 900" (no-break spaces).
+THOUSANDS = re.compile(r"(?<=\d)[,  ](?=\d{3}(?!\d))")
+
+
 def tokenize(text: str) -> list[str]:
-    return [w for w in re.findall(r"[a-z0-9]+", text.lower()) if w not in STOPWORDS]
+    """Lowercase words and numbers, minus stopwords. Used for documents AND queries,
+    so "64,900" and "64900" both become the single token "64900"."""
+    text = THOUSANDS.sub("", text.lower())
+    return [w for w in re.findall(r"[a-z0-9]+", text) if w not in STOPWORDS]
 
 
 def bm25_search(query: str, chunks: list[Chunk], k: int = 3) -> list[Chunk]:

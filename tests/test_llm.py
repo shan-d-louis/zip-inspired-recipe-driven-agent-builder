@@ -3,6 +3,7 @@ import logging
 import os
 import subprocess
 import sys
+from types import SimpleNamespace
 
 import pytest
 from langchain_core.language_models import BaseChatModel
@@ -18,9 +19,10 @@ FAKE_KEY = "sk-test-SECRET-1234567890"
 class StatusError(Exception):
     """Looks like an SDK error with an HTTP status (e.g. groq.RateLimitError)."""
 
-    def __init__(self, status_code: int, message: str = ""):
+    def __init__(self, status_code: int, message: str = "", headers: dict | None = None):
         super().__init__(message or f"HTTP {status_code} for key {FAKE_KEY}")
         self.status_code = status_code
+        self.response = SimpleNamespace(headers=headers or {})  # like groq.APIStatusError.response
 
 
 class WrapperError(Exception):
@@ -220,3 +222,59 @@ async def test_tools_are_bound_for_each_provider():
         MESSAGES, tools=tools, providers=[("gemini", primary), ("groq", ScriptedChatModel())])
     assert provider == "groq"
     assert response.tool_calls[0]["name"] == "company_context"
+
+
+class RateLimitedThenOk(BaseChatModel):
+    """Raises 429 (with a Retry-After header) for the first `failures` calls, then answers."""
+
+    failures: int
+    retry_after: str | None
+    calls: int = 0
+
+    @property
+    def _llm_type(self) -> str:
+        return "flaky"
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs) -> ChatResult:
+        self.calls += 1
+        if self.calls <= self.failures:
+            raise StatusError(429, headers={"retry-after": self.retry_after} if self.retry_after else {})
+        return ChatResult(generations=[ChatGeneration(message=AIMessage(content="ok"))])
+
+
+@pytest.mark.parametrize("retry_after,failures,expected_wait,answers", [
+    ("0.5", 1, 0.5, True),   # waits what the server asked, then succeeds
+    ("30", 1, 5.0, True),    # capped at 5 s
+    (None, 1, 2.0, True),    # no header: default wait
+    ("0.5", 2, 0.5, False),  # only one retry, then the friendly error
+])
+async def test_single_provider_retries_once_after_429(monkeypatch, retry_after, failures, expected_wait, answers):
+    waits = []
+
+    async def fake_sleep(seconds):
+        waits.append(seconds)
+
+    monkeypatch.setattr(llm.asyncio, "sleep", fake_sleep)
+    model = RateLimitedThenOk(failures=failures, retry_after=retry_after)
+    if answers:
+        response, provider = await llm.invoke_with_fallback(MESSAGES, providers=[("groq", model)])
+        assert (response.content, provider) == ("ok", "groq")
+    else:
+        with pytest.raises(llm.LLMUnavailable):
+            await llm.invoke_with_fallback(MESSAGES, providers=[("groq", model)])
+    assert waits == [expected_wait]
+    assert model.calls == 2
+
+
+@pytest.mark.parametrize("env,expected", [(None, "low"), ("medium", "medium"), ("", None)])
+def test_groq_reasoning_effort_from_env(monkeypatch, env, expected):
+    monkeypatch.setenv("LLM_MODE", "live")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("GROQ_API_KEY", FAKE_KEY)
+    monkeypatch.setenv("FALLBACK_MODEL", "openai/gpt-oss-120b")
+    if env is None:
+        monkeypatch.delenv("GROQ_REASONING_EFFORT", raising=False)
+    else:
+        monkeypatch.setenv("GROQ_REASONING_EFFORT", env)
+    (_, groq), = llm.get_providers()
+    assert groq.reasoning_effort == expected
