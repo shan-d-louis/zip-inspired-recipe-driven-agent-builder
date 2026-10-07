@@ -103,7 +103,8 @@ async def test_retrieved_text_is_returned_verbatim_as_data(monkeypatch):
 
 @pytest.mark.parametrize(
     "query,policy",
-    [("renewal price increase", "POL-01"), ("auto-renewal notice", "POL-02"), ("unlimited liability", "POL-04"),
+    [("renewal price increase", "POL-01"), ("auto-renewal notice", "POL-02"), ("data residency", "POL-03"),
+     ("unlimited liability", "POL-04"),
      ("arbitration governing law", "POL-05"), ("duplicate vendor bank details", "POL-06"),
      ("approval threshold amount", "POL-07")],
 )
