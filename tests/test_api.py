@@ -83,6 +83,15 @@ def test_create_and_run_custom_recipe_live(client):
     assert service.run_store.get(result["runId"]).output.ok
 
 
+def test_custom_recipes_are_fetched_by_id_not_listed(client):
+    recipe_id = create_residency(client)
+    data = gql(client, '{ recipes { id } recipe(id: "%s") { name isPreset } missing: recipe(id: "nope") { id } }'
+               % recipe_id)["data"]
+    assert [r["id"] for r in data["recipes"]] == ["renewal-check", "duplicate-vendor-check"]
+    assert data["recipe"] == {"name": "Data Residency Check", "isPreset": False}
+    assert data["missing"] is None
+
+
 @pytest.mark.parametrize("bad,field", [
     ({"name": "x" * 61}, "name"),
     ({"prompt": "x" * 601}, "prompt"),
@@ -167,12 +176,37 @@ def test_rate_limit_is_per_ip_friendly_and_skips_cached_presets(client):
     assert gql(client, RUN, {"r": recipe_id, "q": "3"}, ip="198.51.100.9")["data"]["runRecipe"]["ok"]  # other IP
 
 
-def test_rate_limiter_window_slides():
+def test_rate_limiter_window_slides_and_prunes_idle_ips():
     now = [0.0]
     limiter = RateLimiter(2, 60, clock=lambda: now[0])
     assert limiter.allow("a") and limiter.allow("a") and not limiter.allow("a")
+    limiter.allow("b")
     now[0] = 61
     assert limiter.allow("a")
+    assert len(limiter) == 1  # "b" had no events left in the window, so it was forgotten
+
+
+@pytest.mark.parametrize("headers,expected", [
+    ({"x-forwarded-for": "6.6.6.6, 203.0.113.7"}, "203.0.113.7"),  # left entry is client-supplied (fakeable)
+    ({"x-forwarded-for": "203.0.113.7"}, "203.0.113.7"),
+    ({}, "testclient"),  # no proxy: the socket address
+])
+def test_client_ip_uses_rightmost_forwarded_entry(headers, expected):
+    from starlette.requests import Request
+
+    scope = {"type": "http", "client": ("testclient", 50000),
+             "headers": [(k.encode(), v.encode()) for k, v in headers.items()]}
+    assert limits.client_ip(Request(scope)) == expected
+
+
+async def test_busy_after_waiting_for_a_slot_and_quota_not_used(monkeypatch):
+    monkeypatch.setattr(limits, "SLOT_WAIT_SECONDS", 0.05)
+    recipe = service.create_recipe(name="x", prompt="p", tools=["api_data"], output_format="markdown")
+    for _ in range(limits.MAX_CONCURRENT_RUNS):  # occupy every slot
+        await limits.run_semaphore.acquire()
+    result = await service.run(recipe.id, "3", "10.0.0.1")
+    assert not result.output.ok and result.output.error == service.BUSY and result.run_id is None
+    assert len(limits.run_limiter) == 0  # the busy attempt did not count against the visitor
 
 
 async def test_at_most_two_runs_at_once(monkeypatch):

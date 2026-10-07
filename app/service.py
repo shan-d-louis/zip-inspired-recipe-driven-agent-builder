@@ -2,6 +2,8 @@
 behind the free-tier guardrails.
 """
 
+import asyncio
+
 from pydantic import ValidationError
 
 from app import data_store, limits, preset_cache
@@ -16,6 +18,7 @@ run_store = RunStore()
 
 RATE_LIMITED = ("You've run 6 agents in the last 10 minutes. Please wait a few minutes and try again. "
                 "The two presets still work instantly.")
+BUSY = "The demo is busy with other runs right now. Please try again in a moment."
 
 
 class UserError(Exception):
@@ -57,9 +60,16 @@ async def run(recipe_id: str, request_id: str, ip: str) -> RunRecord:
     if cached is not None:
         return run_store.put(RunRecord(run_id=None, recipe_name=recipe.name, cached=True, mode=mode, output=cached))
 
-    if not limits.run_limiter.allow(ip):
-        return _not_run(recipe_id, request_id, recipe.name, RATE_LIMITED)
-
-    async with limits.run_semaphore:  # at most 2 runs at once; extra runs wait here
+    # At most 2 runs at once. Wait a bounded time for a slot. The slot is taken
+    # before the rate-limit check so a "busy" answer doesn't use up the visitor's quota.
+    try:
+        await asyncio.wait_for(limits.run_semaphore.acquire(), timeout=limits.SLOT_WAIT_SECONDS)
+    except TimeoutError:
+        return _not_run(recipe_id, request_id, recipe.name, BUSY)
+    try:
+        if not limits.run_limiter.allow(ip):
+            return _not_run(recipe_id, request_id, recipe.name, RATE_LIMITED)
         output = await run_recipe(recipe, request_id)
+    finally:
+        limits.run_semaphore.release()
     return run_store.put(RunRecord(run_id=None, recipe_name=recipe.name, cached=False, mode=mode, output=output))

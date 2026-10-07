@@ -20,9 +20,9 @@ class RecipeStore:
     def get(self, recipe_id: str) -> Recipe | None:
         return self._presets.get(recipe_id) or self._custom.get(recipe_id)
 
-    def list(self) -> list[Recipe]:
-        """Presets first, then custom recipes, newest first."""
-        return [*self._presets.values(), *reversed(self._custom.values())]
+    def presets(self) -> list[Recipe]:
+        """Only presets are listed; custom recipes are private to whoever has their id."""
+        return list(self._presets.values())
 
     def create(self, **fields) -> Recipe:
         """Validate and store a custom recipe. Raises pydantic.ValidationError on bad input."""

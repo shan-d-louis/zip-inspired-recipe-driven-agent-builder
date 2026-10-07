@@ -123,9 +123,14 @@ class Query:
     def tools(self) -> list[ToolInfo]:
         return [ToolInfo(name=t.name, description=t.description) for t in TOOL_REGISTRY.values()]
 
-    @strawberry.field
+    @strawberry.field(description="The preset recipes. Custom recipes are fetched by id.")
     def recipes(self) -> list[Recipe]:
-        return [Recipe.from_model(r) for r in service.recipes.list()]
+        return [Recipe.from_model(r) for r in service.recipes.presets()]
+
+    @strawberry.field(description="One recipe (preset or custom) by id; null if unknown or evicted.")
+    def recipe(self, id: strawberry.ID) -> Recipe | None:
+        found = service.recipes.get(str(id))
+        return Recipe.from_model(found) if found else None
 
     @strawberry.field
     def requests(self) -> list[PurchaseRequestSummary]:
