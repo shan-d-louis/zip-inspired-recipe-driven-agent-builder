@@ -18,8 +18,8 @@ FAKE_KEY = "sk-test-SECRET-1234567890"
 class StatusError(Exception):
     """Looks like an SDK error with an HTTP status (e.g. groq.RateLimitError)."""
 
-    def __init__(self, status_code: int):
-        super().__init__(f"HTTP {status_code} for key {FAKE_KEY}")
+    def __init__(self, status_code: int, message: str = ""):
+        super().__init__(message or f"HTTP {status_code} for key {FAKE_KEY}")
         self.status_code = status_code
 
 
@@ -49,6 +49,9 @@ class SlowModel(BaseChatModel):
     @property
     def _llm_type(self) -> str:
         return "slow"
+
+    def bind_tools(self, tools, **kwargs):
+        return self
 
     def _generate(self, *args, **kwargs):
         raise NotImplementedError
@@ -141,14 +144,28 @@ def test_live_mode_without_any_keys_is_unavailable(monkeypatch):
         (type("APITimeoutError", (Exception,), {})(), True),
         (type("APIConnectionError", (Exception,), {})(), True),
         (wrapped_429(), True),
+        (StatusError(401), True),
+        (StatusError(403), True),
+        (StatusError(400, "400 INVALID_ARGUMENT. API key not valid. Please pass a valid API key."), True),
         (StatusError(400), False),
-        (StatusError(401), False),
         (StatusError(404), False),
+        (StatusError(422), False),
         (ValueError("bad tool schema"), False),
     ],
 )
-def test_is_retryable(error, expected):
-    assert llm.is_retryable(error) is expected
+def test_should_fall_back(error, expected):
+    assert llm.should_fall_back(error) is expected
+
+
+def test_startup_log_lists_providers_without_keys(monkeypatch, caplog):
+    caplog.set_level(logging.INFO)
+    monkeypatch.setenv("LLM_MODE", "live")
+    monkeypatch.setenv("GEMINI_API_KEY", FAKE_KEY)
+    monkeypatch.setenv("PRIMARY_MODEL", "primary-model-from-env")
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    llm.log_provider_config()
+    assert "providers in order: gemini" in caplog.text and "primary-model-from-env" in caplog.text
+    assert FAKE_KEY not in caplog.text
 
 
 # --- invoke_with_fallback ---

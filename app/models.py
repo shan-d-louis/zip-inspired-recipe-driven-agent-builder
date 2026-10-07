@@ -90,3 +90,17 @@ class ToolExecutionResult(BaseModel):
     tool_name: str
     ai_readable_string: str  # what the LLM sees
     raw_output: Any  # what post-processing uses (e.g. chunks for citation checks)
+
+
+class RunOutput(BaseModel):
+    """Everything one agent run produced; the API wraps this in Step 5."""
+
+    ok: bool
+    recipe_id: str
+    request_id: str
+    provider: str | None = None
+    markdown: str | None = None  # when output_format is markdown
+    findings: Findings | None = None  # when output_format is structured
+    citations: list[Citation] = []  # quotes found in markdown output
+    trace: list[TraceStep] = []
+    error: str | None = None  # user-facing; never contains secrets

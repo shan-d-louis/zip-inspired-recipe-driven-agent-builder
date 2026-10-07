@@ -11,7 +11,7 @@ checks pass. It can send broken JSON on demand to exercise the retry path.
 
 import json
 import re
-from typing import Any
+from typing import Any, Literal
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
@@ -25,9 +25,16 @@ from app.tools.base import MAX_QUERY_CHARS
 LABEL = re.compile(r"^\[([\w-]+(?:#\d+)?)\]$")  # "[fjord-dpa#3]" or "[POL-03]" as printed by the tools
 
 
+INVENTED_QUOTE = "Customer data will be stored only in Canada"  # appears in no document
+
+
 class ScriptedChatModel(BaseChatModel):
     tool_names: list[str] = Field(default_factory=list)
     invalid_json_replies: int = 0  # how many structured replies to break (retry tests)
+    invent_quote: bool = False  # cite a quote that is in no source, and claim it is verified
+    # Test switch: never stop calling tools. "same_args" repeats one identical
+    # call; "new_args" changes the query every time.
+    keep_calling: Literal["same_args", "new_args"] | None = None
     _invalid_sent: int = PrivateAttr(default=0)
 
     @property
@@ -56,6 +63,10 @@ class ScriptedChatModel(BaseChatModel):
 
     def _next_tool_call(self, messages: list[BaseMessage]) -> AIMessage:
         called = [c["name"] for m in messages if isinstance(m, AIMessage) for c in m.tool_calls]
+        if self.keep_calling:
+            query = "price" if self.keep_calling == "same_args" else f"price {len(called)}"
+            return AIMessage(content="", tool_calls=[{"name": self.tool_names[0], "args": {"query": query},
+                                                      "id": f"call_{len(called) + 1}", "type": "tool_call"}])
         remaining = [name for name in self.tool_names if name not in called]
         if not remaining:
             return AIMessage(content="I have gathered enough information.")
@@ -64,14 +75,15 @@ class ScriptedChatModel(BaseChatModel):
             args = {"section": "summary"}
         else:
             human = next((str(m.content) for m in messages if isinstance(m, HumanMessage)), "")
-            args = {"query": " ".join(human.split()[:25])[:MAX_QUERY_CHARS] or "policy"}
+            task = human.split("\n\n")[0]  # the recipe prompt, without the request details
+            args = {"query": " ".join(task.split()[:25])[:MAX_QUERY_CHARS] or "policy"}
         return AIMessage(
             content="",
             tool_calls=[{"name": name, "args": args, "id": f"call_{len(called) + 1}", "type": "tool_call"}],
         )
 
     @staticmethod
-    def _evidence(text: str, limit: int = 2) -> list[tuple[str, str]]:
+    def _evidence(text: str, limit: int = 3) -> list[tuple[str, str]]:
         """(source, quote) pairs copied verbatim from labelled tool results."""
         found: list[tuple[str, str]] = []
         label = None
@@ -90,11 +102,17 @@ class ScriptedChatModel(BaseChatModel):
                 break
         return found
 
-    def _findings_json(self, text: str) -> str:
+    def _cited_evidence(self, text: str) -> list[tuple[str, str]]:
         evidence = self._evidence(text)
+        if self.invent_quote and evidence:
+            evidence[0] = (evidence[0][0], INVENTED_QUOTE)
+        return evidence
+
+    def _findings_json(self, text: str) -> str:
+        evidence = self._cited_evidence(text)
         findings = [
             {"severity": "medium", "title": f"Review {source}", "detail": "Scripted finding from a retrieved passage.",
-             "source": source, "quote": quote}
+             "source": source, "quote": quote, **({"verified": True} if self.invent_quote else {})}
             for source, quote in evidence
         ] or [{"severity": "info", "title": "No passages retrieved", "detail": "Nothing to cite.",
                "source": None, "quote": None}]
@@ -103,6 +121,6 @@ class ScriptedChatModel(BaseChatModel):
 
     def _markdown(self, text: str) -> str:
         lines = ["## Scripted result (fake mode)", "", "This is a canned answer from the scripted model."]
-        for source, quote in self._evidence(text):
+        for source, quote in self._cited_evidence(text):
             lines += ["", f'> "{quote}" — {source}']
         return "\n".join(lines)

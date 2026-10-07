@@ -75,13 +75,18 @@ def _error_chain(error: BaseException):
         error = error.__cause__ or error.__context__
 
 
-def is_retryable(error: BaseException) -> bool:
-    """True for rate limits, timeouts, dropped connections and 5xx; False otherwise.
+# Gemini answers an invalid API key with 400 (not 401), recognisable by its message.
+BAD_KEY_HINTS = ("API key not valid", "API_KEY_INVALID")
 
-    A bad request (4xx other than 429) would fail on the fallback too, so we
-    don't try it.
+
+def should_fall_back(error: BaseException) -> bool:
+    """True when another provider could succeed where this one failed:
+    rate limits (429), server errors (5xx), timeouts, dropped connections,
+    and auth/permission problems with this provider's key (401, 403, Gemini's
+    bad-key 400). Any other 4xx is a bad request that would fail everywhere.
     """
-    for err in _error_chain(error):
+    chain = list(_error_chain(error))
+    for err in chain:
         if isinstance(err, TimeoutError):
             return True
         name = type(err).__name__
@@ -90,8 +95,22 @@ def is_retryable(error: BaseException) -> bool:
         for attr in ("status_code", "code"):
             status = getattr(err, attr, None)
             if isinstance(status, int) and not isinstance(status, bool):
-                return status == 429 or 500 <= status < 600
+                if status == 400:
+                    return any(hint in str(e) for e in chain for hint in BAD_KEY_HINTS)
+                return status in (401, 403, 429) or 500 <= status < 600
     return False
+
+
+def log_provider_config() -> None:
+    """Log the mode and which providers are configured (names and model IDs, never keys)."""
+    try:
+        providers = get_providers()
+    except LLMUnavailable:
+        logger.warning("LLM mode: %s; no providers configured", llm_mode())
+        return
+    described = ", ".join(f"{name} ({getattr(model, 'model', None) or getattr(model, 'model_name', 'scripted')})"
+                          for name, model in providers)
+    logger.info("LLM mode: %s; providers in order: %s", llm_mode(), described)
 
 
 async def invoke_with_fallback(
@@ -107,7 +126,7 @@ async def invoke_with_fallback(
             response = await asyncio.wait_for(runnable.ainvoke(messages), timeout=timeout_seconds())
             return response, name
         except Exception as error:
-            if not is_retryable(error):
+            if not should_fall_back(error):
                 raise
             # Log the error type only: messages can echo request details.
             logger.warning("LLM provider %s failed with %s; trying next provider", name, type(error).__name__)
