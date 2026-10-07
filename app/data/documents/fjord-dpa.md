@@ -6,9 +6,9 @@ This Data Processing Addendum ("DPA") forms part of the Fjord Cloud Storage Term
 
 Processor will process Customer Data only to provide the archive storage service described in the order form and only on Controller's documented instructions. Customer Data includes files, logs and metadata uploaded by Controller.
 
-## 2. Data Location
+## 2. Data Location and Residency
 
-Customer Data will be stored and processed exclusively in data centers located in the United States. Processor does not offer regional hosting outside the United States for the archive storage tier. Backups are replicated between Processor's Oregon and Virginia facilities.
+Customer Data will be stored and processed exclusively in data centers located in the United States. Processor does not offer data residency in Canada, the EU or any other region outside the United States for the archive storage tier. Backups are replicated between Processor's Oregon and Virginia facilities.
 
 ## 3. Subprocessors
 

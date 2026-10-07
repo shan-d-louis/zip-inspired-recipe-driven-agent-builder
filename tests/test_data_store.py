@@ -169,3 +169,11 @@ def test_bm25_returns_top_k_even_when_no_score_is_positive():
     assert len(data_store.bm25_search("vendor", chunks, k=2)) == 2
     # All scores equal (zero): ties keep the original order.
     assert [c.chunk_id for c in data_store.bm25_search("unmatched", chunks, k=3)] == ["d#1", "d#2", "d#3"]
+
+
+def test_chunker_keeps_heading_with_its_paragraph():
+    for request in data_store.list_requests():
+        for doc in data_store.get_documents(request["id"]):
+            for chunk in data_store.chunk_document(doc["name"], doc["text"]):
+                last_block = chunk.text.split("\n\n")[-1]
+                assert not last_block.startswith("#"), f"{chunk.chunk_id} ends with a heading"

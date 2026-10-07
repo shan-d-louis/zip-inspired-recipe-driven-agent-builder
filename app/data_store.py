@@ -122,13 +122,25 @@ def load_presets() -> list[Recipe]:
 # --- Chunking and keyword search (used by the retrieval tools) ---
 
 
-def chunk_document(doc_name: str, text: str, max_words: int = 120) -> list[Chunk]:
+def chunk_document(doc_name: str, text: str, max_words: int = 70) -> list[Chunk]:
     """Group whole paragraphs into chunks of about max_words words.
 
     Paragraphs are never split, so a short quote from one paragraph always
     sits inside a single chunk. That keeps citation checks simple later.
+    A markdown heading is kept with the paragraph that follows it.
     """
-    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    paragraphs: list[str] = []
+    pending_heading = ""
+    for block in (b.strip() for b in text.split("\n\n")):
+        if not block:
+            continue
+        if block.startswith("#") and "\n" not in block:
+            pending_heading = f"{pending_heading}\n\n{block}".strip()
+            continue
+        paragraphs.append(f"{pending_heading}\n\n{block}".strip())
+        pending_heading = ""
+    if pending_heading:
+        paragraphs.append(pending_heading)
     groups: list[list[str]] = []
     current: list[str] = []
     count = 0
